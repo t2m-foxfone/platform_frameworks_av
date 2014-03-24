@@ -137,6 +137,18 @@ status_t AudioPolicyService::setDeviceConnectionState(audio_devices_t device,
     if (!settingsAllowed()) {
         return PERMISSION_DENIED;
     }
+    /*this conditions is just for exception: the system detects headset and headphone,
+    but there are only one device in fact.*/
+    if (device == (AUDIO_DEVICE_OUT_WIRED_HEADPHONE | AUDIO_DEVICE_OUT_WIRED_HEADSET) &&
+            state == AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE) {
+        ALOGV("setDeviceConnectionState()");
+        Mutex::Autolock _l(mLock);
+        mpAudioPolicy->set_device_connection_state(mpAudioPolicy, AUDIO_DEVICE_OUT_WIRED_HEADSET,
+            state, device_address);
+        mpAudioPolicy->set_device_connection_state(mpAudioPolicy, AUDIO_DEVICE_OUT_WIRED_HEADPHONE,
+            state, device_address);
+        return NO_ERROR;
+    }
     if (!audio_is_output_device(device) && !audio_is_input_device(device)) {
         return BAD_VALUE;
     }
